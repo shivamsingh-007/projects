@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie WiFi Detector - Network Security Scanner</title>
+    <link rel="stylesheet" href="frontend/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="shield-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="loading-spinner"></div>
+            <p>Initializing Security Scanner...</p>
+        </div>
+    </div>
+
+    <!-- Login/Register Page -->
+    <div id="auth-page" class="auth-page">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <h1>Zombie WiFi Detector</h1>
+                </div>
+                <p class="tagline">Protect your network from compromised routers</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h2>Welcome Back</h2>
+                <p class="form-subtitle">Sign in to continue protecting your network</p>
+                
+                <div class="form-group">
+                    <label for="login-username">
+                        <i class="fas fa-user"></i>
+                        Username or Email
+                    </label>
+                    <input type="text" id="login-username" placeholder="Enter your username or email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="login-password">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <input type="password" id="login-password" placeholder="Enter your password" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="handleLogin()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Sign In
+                </button>
+
+                <p class="switch-form">
+                    Don't have an account? 
+                    <a href="#" onclick="showRegister()">Create Account</a>
+                </p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form" style="display: none;">
+                <h2>Create Account</h2>
+                <p class="form-subtitle">Join us to start protecting your network</p>
+                
+                <div class="form-group">
+                    <label for="register-username">
+                        <i class="fas fa-user"></i>
+                        Username
+                    </label>
+                    <input type="text" id="register-username" placeholder="Choose a username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-email">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </label>
+                    <input type="email" id="register-email" placeholder="your@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="register-password">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <input type="password" id="register-password" placeholder="Minimum 6 characters" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="handleRegister()">
+                    <i class="fas fa-user-plus"></i>
+                    Create Account
+                </button>
+
+                <p class="switch-form">
+                    Already have an account? 
+                    <a href="#" onclick="showLogin()">Sign In</a>
+                </p>
+            </div>
+
+            <div class="auth-footer">
+                <p>🔒 Your data is encrypted and secure</p>
+                <p class="version">v1.0.0</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard-page" class="dashboard-page" style="display: none;">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Zombie WiFi Detector</span>
+                </div>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="nav-username">User</span>
+                </div>
+                <button class="btn btn-ghost" onclick="handleLogout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Status Card -->
+            <div class="status-card" id="status-card">
+                <div class="status-header">
+                    <div class="status-icon" id="status-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="status-info">
+                        <h2 id="status-title">Network Status</h2>
+                        <p id="status-message">Click scan to check your network</p>
+                    </div>
+                </div>
+
+                <div class="status-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Alert Level</span>
+                        <span class="detail-value" id="alert-level">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Confidence</span>
+                        <span class="detail-value" id="confidence">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Scan</span>
+                        <span class="detail-value" id="last-scan">Never</span>
+                    </div>
+                </div>
+
+                <div class="scan-progress" id="scan-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <p>Scanning network traffic...</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button class="btn btn-large btn-primary" id="scan-btn" onclick="performScan()">
+                    <i class="fas fa-search"></i>
+                    <span>Scan Now</span>
+                </button>
+                <button class="btn btn-large btn-secondary" onclick="showSettings()">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
+
+            <!-- Auto-Scan Toggle -->
+            <div class="auto-scan-card">
+                <div class="auto-scan-info">
+                    <h3>
+                        <i class="fas fa-clock"></i>
+                        Automatic Scanning
+                    </h3>
+                    <p>Scan your network every hour automatically</p>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="auto-scan-toggle" onchange="toggleAutoScan()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+
+            <!-- Scan History -->
+            <div class="history-card">
+                <h3>
+                    <i class="fas fa-history"></i>
+                    Recent Scans
+                </h3>
+                <div class="history-list" id="history-list">
+                    <p class="empty-state">No scans yet. Click "Scan Now" to start.</p>
+                </div>
+            </div>
+
+            <!-- Security Tips -->
+            <div class="tips-card">
+                <h3>
+                    <i class="fas fa-lightbulb"></i>
+                    Security Tips
+                </h3>
+                <ul class="tips-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        Change your router password regularly
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        Keep router firmware up to date
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        Use WPA3 encryption if available
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        Disable remote management features
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        Monitor connected devices regularly
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-cog"></i>
+                    Settings
+                </h2>
+                <button class="modal-close" onclick="closeSettings()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Network Interface</h3>
+                    <p class="section-description">Select your active network interface</p>
+                    
+                    <div class="form-group">
+                        <label for="interface-select">Interface</label>
+                        <select id="interface-select">
+                            <option value="">Detecting interfaces...</option>
+                        </select>
+                        <button class="btn btn-small" onclick="detectInterface()">
+                            <i class="fas fa-sync"></i>
+                            Auto-Detect
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Scan Interval</h3>
+                    <p class="section-description">How often to scan automatically (in hours)</p>
+                    
+                    <div class="form-group">
+                        <input type="number" id="scan-interval" min="1" max="24" value="1">
+                        <span class="input-suffix">hours</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Notifications</h3>
+                    <p class="section-description">Get alerted when threats are detected</p>
+                    
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="notifications-enabled" checked>
+                        <span>Enable browser notifications</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveSettings()">
+                    <i class="fas fa-save"></i>
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="frontend/app.js"></script>
+</body>
+</html>

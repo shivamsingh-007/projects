@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧟 Zombie WiFi Detector | CyberSentry AI</title>
+    <link rel="stylesheet" href="/static/css/cyberpunk.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Particle Background -->
+    <canvas id="particleCanvas"></canvas>
+    
+    <!-- Cyber Grid -->
+    <div class="cyber-grid"></div>
+    
+    <!-- Navigation -->
+    <nav class="cyber-nav">
+        <div class="nav-logo">
+            <i class="fas fa-skull"></i>
+            <i class="fas fa-wifi"></i>
+            <span class="nav-title">Zombie WiFi Detector</span>
+        </div>
+        <div class="nav-links">
+            <button class="nav-btn" onclick="openCreators()">
+                <i class="fas fa-users"></i> Creators
+            </button>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="text-center mb-20">
+            <h1 class="glitch" data-text="ZOMBIE WIFI DETECTOR" style="font-size: 56px; margin: 40px 0 20px;">
+                ZOMBIE WIFI DETECTOR
+            </h1>
+            <p style="font-size: 20px; color: rgba(255,255,255,0.8); margin-bottom: 40px;">
+                🤖 AI-Powered Network Security Scanner
+            </p>
+            
+            <!-- Scan Button -->
+            <button class="scan-btn" onclick="runQuickScan()">
+                <i class="fas fa-satellite-dish"></i>
+                <span>SCAN NOW</span>
+            </button>
+        </div>
+        
+        <!-- Stats Grid -->
+        <div class="stats-grid" style="margin-top: 60px;">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
+                <div class="stat-value" id="totalScans">0</div>
+                <div class="stat-label">Total Scans</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-value" id="threats">0</div>
+                <div class="stat-label">Threats Detected</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                <div class="countdown" id="nextScan">--:--:--</div>
+                <div class="stat-label">Next Auto Scan</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-wifi"></i></div>
+                <div class="stat-value" id="networks">0</div>
+                <div class="stat-label">Networks Found</div>
+            </div>
+        </div>
+        
+        <!-- Scan Results -->
+        <div id="scanResults" class="mt-20"></div>
+        
+        <!-- Network List -->
+        <div id="networkList" class="network-list"></div>
+    </div>
+    
+    <!-- Creators Modal -->
+    <div id="creatorsModal" class="cyber-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeCreators()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="creators-content">
+                <h2 class="creators-title">CYBERSENTRY AI</h2>
+                <p class="creators-text" style="font-size: 18px; line-height: 1.8; margin: 20px 0;">
+                    THIS MODEL IS A PART OF CYBERSENTRY AI<br>
+                    BY TARUN, SHIVAM AND YASH<br><br>
+                    IT WORKS FOR THE SECURITY OF EVERY PERSON<br>
+                    FROM THE ZOMBIE WIFI NETWORK THREATS
+                </p>
+                
+                <div class="team-grid">
+                    <div class="team-card">
+                        <div class="team-avatar">👨‍💻</div>
+                        <div class="team-name">TARUN</div>
+                        <div class="team-role">Lead Developer</div>
+                    </div>
+                    
+                    <div class="team-card">
+                        <div class="team-avatar">👨‍💻</div>
+                        <div class="team-name">SHIVAM</div>
+                        <div class="team-role">ML Engineer</div>
+                    </div>
+                    
+                    <div class="team-card">
+                        <div class="team-avatar">👨‍💻</div>
+                        <div class="team-name">YASH</div>
+                        <div class="team-role">Security Expert</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="cyber-footer">
+        <div class="footer-text">A Product of CyberSentry AI</div>
+    </footer>
+    
+    <!-- Scripts -->
+    <script src="/static/js/cyberpunk.js"></script>
+    <script>
+        function openCreators() {
+            document.getElementById('creatorsModal').classList.add('active');
+        }
+        
+        function closeCreators() {
+            document.getElementById('creatorsModal').classList.remove('active');
+        }
+        
+        // Load stats on page load
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/scans/stats');
+                const data = await response.json();
+                
+                if (data.success && window.CyberFX) {
+                    window.CyberFX.animateCounter(document.getElementById('totalScans'), data.stats.total_scans);
+                    window.CyberFX.animateCounter(document.getElementById('threats'), data.stats.threats_detected);
+                    window.CyberFX.animateCounter(document.getElementById('networks'), data.stats.available_networks);
+                    window.CyberFX.startCountdown(document.getElementById('nextScan'), data.stats.next_auto_scan);
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Run quick scan
+        async function runQuickScan() {
+            const btn = event.target.closest('.scan-btn');
+            const results = document.getElementById('scanResults');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> SCANNING...';
+            
+            // Create explosion effect
+            if (window.CyberFX) {
+                window.CyberFX.createScanExplosion();
+            }
+            
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const result = data.result;
+                    
+                    // Determine color based on alert level
+                    const colors = ['#00ff88', '#ffea00', '#ff9500', '#ff6500', '#ff0055'];
+                    const alertColor = colors[result.alert_level];
+                    
+                    // Show result
+                    results.innerHTML = `
+                        <div class="cyber-card" style="text-align: center; margin-top: 30px; border-color: ${alertColor};">
+                            <h2 class="glitch" data-text="${result.alert_name}" style="color: ${alertColor}; font-size: 48px; margin-bottom: 20px;">
+                                ${result.alert_name}
+                            </h2>
+                            <p style="font-size: 24px; color: #00d9ff; margin: 20px 0;">
+                                Confidence: ${(result.confidence * 100).toFixed(1)}%
+                            </p>
+                            <div style="display: flex; justify-content: space-around; margin-top: 30px; flex-wrap: wrap; gap: 20px;">
+                                <div>
+                                    <i class="fas fa-network-wired" style="font-size: 24px; color: #00d9ff;"></i>
+                                    <p style="margin-top: 10px;">${result.networks_found} Networks</p>
+                                </div>
+                                <div>
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; color: #ff0055;"></i>
+                                    <p style="margin-top: 10px;">${result.threats_detected} Threats</p>
+                                </div>
+                                <div>
+                                    <i class="fas fa-clock" style="font-size: 24px; color: #b026ff;"></i>
+                                    <p style="margin-top: 10px;">${new Date(result.timestamp).toLocaleTimeString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Load networks
+                    if (result.networks && result.networks.length > 0) {
+                        loadNetworks(result.networks);
+                    }
+                    
+                    // Reload stats
+                    loadStats();
+                }
+            } catch (error) {
+                results.innerHTML = `
+                    <div class="cyber-card" style="text-align: center; border-color: #ff0055;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; color: #ff0055;"></i>
+                        <p style="margin-top: 20px; color: #ff0055;">Scan failed: ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-satellite-dish"></i> <span>SCAN AGAIN</span>';
+            }
+        }
+        
+        // Load and display networks
+        function loadNetworks(networks) {
+            const list = document.getElementById('networkList');
+            
+            if (!networks || networks.length === 0) {
+                list.innerHTML = '';
+                return;
+            }
+            
+            list.innerHTML = '<h3 style="color: #00d9ff; margin-bottom: 20px; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">🛡️ DETECTED NETWORKS</h3>';
+            
+            networks.forEach((network, index) => {
+                const threatClass = ['threat-safe', 'threat-low', 'threat-medium', 'threat-high', 'threat-critical'][network.threat_level];
+                
+                const item = document.createElement('div');
+                item.className = 'network-item';
+                item.innerHTML = `
+                    <div class="network-header">
+                        <div class="network-ssid">
+                            <i class="fas fa-wifi"></i>
+                            ${network.ssid}
+                            ${network.is_zombie ? '<span class="zombie-badge"><i class="fas fa-skull"></i> ZOMBIE</span>' : ''}
+                        </div>
+                        <span class="threat-badge ${threatClass}">${network.threat_name}</span>
+                    </div>
+                    <div class="signal-bar">
+                        <div class="signal-fill" data-percent="${network.signal_percent}"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 10px;">
+                        <span><i class="fas fa-lock"></i> ${network.encryption}</span>
+                        <span><i class="fas fa-signal"></i> ${network.signal} dBm</span>
+                        <span><i class="fas fa-broadcast-tower"></i> Ch ${network.channel}</span>
+                    </div>
+                `;
+                
+                list.appendChild(item);
+                
+                // Animate signal bar after a delay
+                setTimeout(() => {
+                    const fill = item.querySelector('.signal-fill');
+                    if (window.CyberFX) {
+                        window.CyberFX.animateSignalBar(fill, network.signal_percent);
+                    }
+                }, 100 + (index * 100));
+            });
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            console.log('🎮 Cyberpunk Zombie WiFi Detector loaded!');
+            console.log('🤖 CyberSentry AI - Tarun, Shivam, Yash');
+        });
+    </script>
+</body>
+</html>

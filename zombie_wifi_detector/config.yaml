@@ -1,0 +1,68 @@
+# Configuration for Zombie WiFi Detection System
+
+# Data Collection Settings
+data_collection:
+  capture_duration: 300  # seconds per window
+  interface: "eth0"  # network interface to monitor
+  pcap_filter: ""  # BPF filter (empty = capture all)
+  max_packets_per_window: 10000
+
+# Feature Extraction Settings
+features:
+  dns:
+    enable_dga_detection: true
+    enable_tunneling_detection: true
+    entropy_threshold: 3.5
+  
+  traffic:
+    enable_flow_analysis: true
+    suspicious_port_threshold: 100
+    scan_detection_window: 60
+  
+  temporal:
+    time_window_minutes: 5
+    enable_periodicity_detection: true
+
+# Model Settings
+model:
+  algorithm: "random_forest"  # Options: random_forest, xgboost, isolation_forest, lstm
+  random_forest:
+    n_estimators: 200
+    max_depth: 20
+    min_samples_split: 10
+  
+  xgboost:
+    n_estimators: 150
+    max_depth: 15
+    learning_rate: 0.1
+  
+  isolation_forest:
+    contamination: 0.1
+    n_estimators: 100
+
+# Detection Thresholds
+thresholds:
+  high_confidence: 0.85
+  medium_confidence: 0.65
+  anomaly_score: 2.5
+
+# Alert Settings
+alerts:
+  enable_logging: true
+  log_file: "logs/detections.log"
+  enable_email: false
+  email_address: ""
+
+# Training Settings
+training:
+  test_split: 0.2
+  validation_split: 0.1
+  cross_validation_folds: 5
+  enable_hyperparameter_tuning: false
+
+# Paths
+paths:
+  model_dir: "models/"
+  data_dir: "data/"
+  logs_dir: "logs/"
+  baseline_profile: "models/baseline_profile.pkl"

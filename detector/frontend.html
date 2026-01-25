@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSentryAI - Scam Detection Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        textarea, input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .image-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button[type="submit"]:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: slideIn 0.4s;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .result-box.safe {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .result-box.danger {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+
+        .result-box.warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+        }
+
+        .result-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+        }
+
+        .result-item strong {
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .explanation-list {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+
+        .explanation-list li {
+            margin: 5px 0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ CyberSentryAI</h1>
+            <p class="subtitle">AI-Powered Scam Detection Platform</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('text')">📱 Text Message</button>
+            <button class="tab-button" onclick="switchTab('url')">🔗 URL/Link</button>
+            <button class="tab-button" onclick="switchTab('image')">🖼️ Image</button>
+        </div>
+
+        <!-- Text Detection Tab -->
+        <div id="text-tab" class="tab-content active">
+            <div class="info-box">
+                <h3>Text Message Scam Detection</h3>
+                <p>Paste any SMS, WhatsApp, or email message to check if it's a scam. Our AI analyzes patterns like urgency, threats, and impersonation.</p>
+            </div>
+
+            <form id="text-form">
+                <div class="input-group">
+                    <label for="text-input">Enter Message Text:</label>
+                    <textarea id="text-input" placeholder="Paste the message you want to check here..."></textarea>
+                </div>
+                <button type="submit">🔍 Analyze Message</button>
+            </form>
+
+            <div class="loading" id="text-loading">
+                <div class="spinner"></div>
+                <p>Analyzing message...</p>
+            </div>
+
+            <div class="error-message" id="text-error"></div>
+            <div class="result-box" id="text-result"></div>
+        </div>
+
+        <!-- URL Detection Tab -->
+        <div id="url-tab" class="tab-content">
+            <div class="info-box">
+                <h3>URL Phishing Detection</h3>
+                <p>Check if a website link is safe before clicking. Our AI examines URL patterns, HTTPS security, and suspicious keywords.</p>
+            </div>
+
+            <form id="url-form">
+                <div class="input-group">
+                    <label for="url-input">Enter URL:</label>
+                    <input type="text" id="url-input" placeholder="https://example.com">
+                </div>
+                <button type="submit">🔍 Check URL</button>
+            </form>
+
+            <div class="loading" id="url-loading">
+                <div class="spinner"></div>
+                <p>Checking URL...</p>
+            </div>
+
+            <div class="error-message" id="url-error"></div>
+            <div class="result-box" id="url-result"></div>
+        </div>
+
+        <!-- Image Detection Tab -->
+        <div id="image-tab" class="tab-content">
+            <div class="info-box">
+                <h3>Image Scam Detection</h3>
+                <p>Upload an image (screenshot, poster, ad) to check for scam indicators like fake urgency, suspicious designs, or phishing attempts.</p>
+            </div>
+
+            <form id="image-form">
+                <div class="input-group">
+                    <label for="image-input">Upload Image:</label>
+                    <input type="file" id="image-input" accept="image/*">
+                    <div class="image-preview" id="image-preview"></div>
+                </div>
+                <button type="submit">🔍 Analyze Image</button>
+            </form>
+
+            <div class="loading" id="image-loading">
+                <div class="spinner"></div>
+                <p>Analyzing image...</p>
+            </div>
+
+            <div class="error-message" id="image-error"></div>
+            <div class="result-box" id="image-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Update these URLs to match your backend
+        const API_CONFIG = {
+            TEXT_API: 'http://localhost:5001/detect-text',
+            URL_API: 'http://localhost:5002/detect-url',
+            IMAGE_API: 'http://localhost:5003/detect-image'
+        };
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            event.target.classList.add('active');
+
+            // Clear previous results
+            clearResults(tabName);
+        }
+
+        function clearResults(type) {
+            document.getElementById(`${type}-result`).classList.remove('show');
+            document.getElementById(`${type}-error`).classList.remove('show');
+        }
+
+        // Text Message Detection
+        document.getElementById('text-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('text-input').value.trim();
+            const loading = document.getElementById('text-loading');
+            const resultBox = document.getElementById('text-result');
+            const errorBox = document.getElementById('text-error');
+
+            if (!text) {
+                showError('text', 'Please enter a message to analyze');
+                return;
+            }
+
+            loading.classList.add('show');
+            resultBox.classList.remove('show');
+            errorBox.classList.remove('show');
+
+            try {
+                const response = await fetch(API_CONFIG.TEXT_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+                displayTextResult(data);
+            } catch (error) {
+                showError('text', 'Failed to connect to server. Make sure the backend is running on port 5001.');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // URL Detection
+        document.getElementById('url-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = document.getElementById('url-input').value.trim();
+            const loading = document.getElementById('url-loading');
+            const resultBox = document.getElementById('url-result');
+            const errorBox = document.getElementById('url-error');
+
+            if (!url) {
+                showError('url', 'Please enter a URL to check');
+                return;
+            }
+
+            loading.classList.add('show');
+            resultBox.classList.remove('show');
+            errorBox.classList.remove('show');
+
+            try {
+                const response = await fetch(API_CONFIG.URL_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                displayUrlResult(data);
+            } catch (error) {
+                showError('url', 'Failed to connect to server. Make sure the backend is running on port 5002.');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // Image Detection
+        document.getElementById('image-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const preview = document.getElementById('image-preview');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '';
+            }
+        });
+
+        document.getElementById('image-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('image-input');
+            const loading = document.getElementById('image-loading');
+            const resultBox = document.getElementById('image-result');
+            const errorBox = document.getElementById('image-error');
+
+            if (!fileInput.files || !fileInput.files[0]) {
+                showError('image', 'Please select an image to analyze');
+                return;
+            }
+
+            loading.classList.add('show');
+            resultBox.classList.remove('show');
+            errorBox.classList.remove('show');
+
+            try {
+                // Option 1: Send as FormData (file upload)
+                const formData = new FormData();
+                formData.append('image', fileInput.files[0]);
+
+                const response = await fetch(API_CONFIG.IMAGE_API, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                // Option 2: Send as base64 (alternative)
+                // const reader = new FileReader();
+                // reader.onload = async () => {
+                //     const response = await fetch(API_CONFIG.IMAGE_API, {
+                //         method: 'POST',
+                //         headers: { 'Content-Type': 'application/json' },
+                //         body: JSON.stringify({ image_data: reader.result })
+                //     });
+                //     const data = await response.json();
+                //     displayImageResult(data);
+                // };
+                // reader.readAsDataURL(fileInput.files[0]);
+
+                const data = await response.json();
+                displayImageResult(data);
+            } catch (error) {
+                showError('image', 'Failed to connect to server. Make sure the backend is running on port 5003.');
+            } finally {
+                loading.classList.remove('show');
+            }
+        });
+
+        // Display Functions
+        function displayTextResult(data) {
+            const resultBox = document.getElementById('text-result');
+            const riskClass = data.is_scam ? 'danger' : 'safe';
+            
+            resultBox.className = `result-box show ${riskClass}`;
+            resultBox.innerHTML = `
+                <div class="result-title">${data.is_scam ? '⚠️ SCAM DETECTED' : '✅ LOOKS SAFE'}</div>
+                <div class="result-item"><strong>Risk Level:</strong> ${data.risk_level}</div>
+                <div class="result-item"><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</div>
+                <div class="result-item">
+                    <strong>Explanation:</strong>
+                    <p>${data.explanation}</p>
+                </div>
+            `;
+        }
+
+        function displayUrlResult(data) {
+            const resultBox = document.getElementById('url-result');
+            const riskClass = data.is_phishing ? 'danger' : 'safe';
+            
+            let explanationHtml = '';
+            if (data.explanation && data.explanation.length > 0) {
+                explanationHtml = `
+                    <div class="result-item">
+                        <strong>Warning Signs:</strong>
+                        <ul class="explanation-list">
+                            ${data.explanation.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            resultBox.className = `result-box show ${riskClass}`;
+            resultBox.innerHTML = `
+                <div class="result-title">${data.is_phishing ? '⚠️ PHISHING DETECTED' : '✅ URL LOOKS SAFE'}</div>
+                <div class="result-item"><strong>Risk Level:</strong> ${data.risk_level}</div>
+                <div class="result-item"><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</div>
+                ${explanationHtml}
+                ${data.note ? `<div class="result-item"><small>${data.note}</small></div>` : ''}
+            `;
+        }
+
+        function displayImageResult(data) {
+            const resultBox = document.getElementById('image-result');
+            const riskClass = data.is_scam ? 'danger' : 'safe';
+            
+            let explanationHtml = '';
+            if (data.explanation && data.explanation.length > 0) {
+                explanationHtml = `
+                    <div class="result-item">
+                        <strong>Detected Indicators:</strong>
+                        <ul class="explanation-list">
+                            ${data.explanation.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
+            resultBox.className = `result-box show ${riskClass}`;
+            resultBox.innerHTML = `
+                <div class="result-title">${data.is_scam ? '⚠️ SCAM IMAGE DETECTED' : '✅ IMAGE LOOKS SAFE'}</div>
+                <div class="result-item"><strong>Risk Level:</strong> ${data.risk_level}</div>
+                <div class="result-item"><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(1)}%</div>
+                ${explanationHtml}
+            `;
+        }
+
+        function showError(type, message) {
+            const errorBox = document.getElementById(`${type}-error`);
+            errorBox.textContent = message;
+            errorBox.classList.add('show');
+        }
+    </script>
+</body>
+</html>

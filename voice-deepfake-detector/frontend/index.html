@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered voice deepfake detection tool. Analyze audio files to detect synthetic or manipulated voices.">
+    <title>Voice Deepfake Detector | AI-Powered Audio Authentication</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- WaveSurfer.js for audio visualization -->
+    <script src="https://unpkg.com/wavesurfer.js@7.7.0"></script>
+    
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="background-animation">
+        <div class="wave wave-1"></div>
+        <div class="wave wave-2"></div>
+        <div class="wave wave-3"></div>
+    </div>
+    
+    <!-- Particle Effect Container -->
+    <canvas id="particles"></canvas>
+    
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" fill="currentColor"/>
+                        <path d="M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/>
+                        <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Voice Deepfake Detector</h1>
+                    <p class="tagline">AI-Powered Audio Authentication</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="accuracy-stat">95.2%</span>
+                    <span class="stat-label">Accuracy</span>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section glass-card" id="upload-section">
+                <h2 class="section-title">Upload Audio File</h2>
+                
+                <!-- Drag and Drop Zone -->
+                <div class="drop-zone" id="drop-zone">
+                    <input type="file" id="file-input" accept=".mp3,.wav,.m4a,.ogg,.flac" hidden aria-label="Upload audio file">
+                    <div class="drop-zone-content">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7 18C5.17107 18.4117 4 19.0443 4 19.7537C4 20.9943 7.58172 22 12 22C16.4183 22 20 20.9943 20 19.7537C20 19.0443 18.8289 18.4117 17 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M12 15L12 2M12 2L15 5.5M12 2L9 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3>Drop your audio file here</h3>
+                        <p class="drop-hint">or click to browse</p>
+                        <div class="format-indicators">
+                            <span class="format-badge">MP3</span>
+                            <span class="format-badge">WAV</span>
+                            <span class="format-badge">M4A</span>
+                            <span class="format-badge">OGG</span>
+                            <span class="format-badge">FLAC</span>
+                        </div>
+                        <p class="file-constraints">Max size: 10MB • Duration: 1-60 seconds</p>
+                    </div>
+                </div>
+                
+                <!-- File Preview -->
+                <div class="file-preview hidden" id="file-preview">
+                    <div class="file-info">
+                        <div class="file-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 17H7C4.23858 17 2 14.7614 2 12C2 9.23858 4.23858 7 7 7C7 4.23858 9.23858 2 12 2C14.419 2 16.4367 3.71776 16.9 6.00003M15 12C17.7614 12 20 14.2386 20 17C20 19.7614 17.7614 22 15 22H13C10.2386 22 8 19.7614 8 17C8 14.2386 10.2386 12 13 12H15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <div class="file-details">
+                            <p class="file-name" id="file-name">audio_file.mp3</p>
+                            <p class="file-meta">
+                                <span id="file-size">2.5 MB</span>
+                                <span class="separator">•</span>
+                                <span id="file-duration">15s</span>
+                            </p>
+                        </div>
+                        <button class="btn-remove" id="btn-remove" aria-label="Remove file">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Audio Player with Waveform -->
+                    <div class="audio-player" id="audio-player">
+                        <div id="waveform"></div>
+                        <div class="player-controls">
+                            <button class="btn-play" id="btn-play" aria-label="Play audio">
+                                <svg class="icon-play" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 5V19L19 12L8 5Z" fill="currentColor"/>
+                                </svg>
+                                <svg class="icon-pause hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M6 4H10V20H6V4ZM14 4H18V20H14V4Z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <span class="time-display" id="time-display">0:00 / 0:00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analyze Button -->
+                <button class="btn-analyze" id="btn-analyze" disabled aria-label="Analyze audio for deepfake detection">
+                    <span class="btn-text">Analyze Audio</span>
+                    <span class="btn-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </button>
+            </section>
+            
+            <!-- Processing Indicator -->
+            <div class="processing-overlay hidden" id="processing-overlay">
+                <div class="processing-content glass-card">
+                    <div class="loader-container">
+                        <div class="audio-wave-loader">
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                            <div class="wave-bar"></div>
+                        </div>
+                    </div>
+                    <h3 class="processing-title">Analyzing Audio...</h3>
+                    <p class="processing-subtitle">Extracting features and running deepfake detection</p>
+                    <div class="processing-steps">
+                        <div class="step active">
+                            <span class="step-icon">✓</span>
+                            <span>Loading audio</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-icon">⟳</span>
+                            <span>Extracting MFCC features</span>
+                        </div>
+                        <div class="step">
+                            <span class="step-icon">⟳</span>
+                            <span>Running AI model</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Section -->
+            <section class="results-section hidden" id="results-section">
+                <div class="glass-card results-card">
+                    <div class="verdict-container" id="verdict-container">
+                        <div class="verdict-icon" id="verdict-icon">
+                            <!-- Dynamic icon -->
+                        </div>
+                        <h2 class="verdict-title" id="verdict-title">REAL VOICE</h2>
+                        <p class="verdict-subtitle" id="verdict-subtitle">Audio appears to be authentic</p>
+                    </div>
+                    
+                    <!-- Confidence Meter -->
+                    <div class="confidence-container">
+                        <div class="confidence-label">
+                            <span>Confidence Score</span>
+                            <span class="confidence-value" id="confidence-value">87.3%</span>
+                        </div>
+                        <div class="progress-ring" id="progress-ring">
+                            <svg class="progress-ring-svg" width="200" height="200">
+                                <circle class="progress-ring-circle-bg" cx="100" cy="100" r="85" />
+                                <circle class="progress-ring-circle" cx="100" cy="100" r="85" id="progress-circle" />
+                                <text x="100" y="100" class="progress-text" id="progress-text">87%</text>
+                            </svg>
+                        </div>
+                        <div class="authenticity-score">
+                            <p class="score-label">Authenticity Score</p>
+                            <p class="score-value" id="authenticity-score">87.3%</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Detailed Info -->
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Duration</span>
+                            <span class="detail-value" id="result-duration">15.2s</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Sample Rate</span>
+                            <span class="detail-value" id="result-sample-rate">16000 Hz</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Model Version</span>
+                            <span class="detail-value">v1.0.0</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Analysis Time</span>
+                            <span class="detail-value" id="analysis-time">2.3s</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="results-actions">
+                        <button class="btn-secondary" id="btn-analyze-another">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 12H20M4 12L8 8M4 12L8 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Analyze Another
+                        </button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- How It Works Section -->
+            <section class="info-section glass-card">
+                <div class="info-header" id="info-header">
+                    <h3>How It Works</h3>
+                    <button class="btn-expand" id="btn-expand" aria-label="Expand information">
+                        <svg class="icon-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="info-content hidden" id="info-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-number">01</div>
+                            <h4>Audio Upload</h4>
+                            <p>Upload your audio file in MP3, WAV, M4A, OGG, or FLAC format. Maximum file size is 10MB.</p>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-number">02</div>
+                            <h4>Feature Extraction</h4>
+                            <p>Our system extracts MFCC (Mel-Frequency Cepstral Coefficients) and spectral features from the audio.</p>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-number">03</div>
+                            <h4>AI Analysis</h4>
+                            <p>A deep learning CNN model analyzes the features to detect patterns typical of synthetic or manipulated voices.</p>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-number">04</div>
+                            <h4>Results</h4>
+                            <p>Receive a confidence score and verdict indicating whether the audio is authentic or potentially synthetic.</p>
+                        </div>
+                    </div>
+                    <div class="disclaimer">
+                        <p><strong>Note:</strong> This tool provides an AI-based assessment and should be used as one factor in audio authentication. For critical applications, consider professional forensic analysis.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 Voice Deepfake Detector. Powered by AI. Built for security.</p>
+        </footer>
+    </div>
+    
+    <!-- Error Toast -->
+    <div class="toast hidden" id="error-toast" role="alert">
+        <div class="toast-icon">⚠️</div>
+        <div class="toast-content">
+            <p class="toast-title">Error</p>
+            <p class="toast-message" id="toast-message">Something went wrong</p>
+        </div>
+        <button class="toast-close" id="toast-close" aria-label="Close notification">×</button>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>

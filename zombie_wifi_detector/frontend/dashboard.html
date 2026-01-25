@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Zombie WiFi Detector</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-shield-virus"></i>
+            <span>WiFi Detector</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showScans()">
+                <i class="fas fa-history"></i>
+                <span>Scan History</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSettings()">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info" id="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Loading...</span>
+            </div>
+            <button class="btn btn-outline btn-small" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div>
+                <h1>Network Security Dashboard</h1>
+                <p>Real-time protection for your network</p>
+            </div>
+            <button class="btn btn-primary" onclick="runManualScan()" id="scan-btn">
+                <i class="fas fa-search"></i>
+                Scan Now
+            </button>
+        </header>
+
+        <!-- Alert Container -->
+        <div id="alert-container"></div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-primary">
+                    <i class="fas fa-shield-check"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="total-scans">0</h3>
+                    <p>Total Scans</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="threats-detected">0</h3>
+                    <p>Threats Detected</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-success">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="last-scan-time">Never</h3>
+                    <p>Last Scan</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon stat-icon-info">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="next-auto-scan">1h 0m</h3>
+                    <p>Next Auto Scan</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Status -->
+        <div class="status-section">
+            <div class="card status-card-large" id="status-card">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading network status...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Scans -->
+        <div class="card">
+            <div class="card-header">
+                <h2>
+                    <i class="fas fa-history"></i>
+                    Recent Scans
+                </h2>
+                <button class="btn btn-small btn-outline" onclick="refreshScans()">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="scans-list">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading scan history...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="scan-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Scanning Network</h2>
+            </div>
+            <div class="modal-body">
+                <div class="scan-progress">
+                    <div class="scan-spinner">
+                        <i class="fas fa-shield-virus fa-3x"></i>
+                    </div>
+                    <p class="scan-status">Analyzing your network...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p class="scan-detail">This may take up to 30 seconds</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let scansData = [];
+        let statsData = {};
+
+        // Load dashboard data on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkAuth();
+            await loadDashboard();
+            startAutoRefresh();
+        });
+
+        async function checkAuth() {
+            try {
+                const response = await fetch('/api/me');
+                const data = await response.json();
+                if (!data.success) {
+                    window.location.href = '/login';
+                    return;
+                }
+                currentUser = data.user;
+                document.getElementById('user-info').innerHTML = `
+                    <i class="fas fa-user-circle"></i>
+                    <span>${currentUser.username}</span>
+                `;
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        }
+
+        async function loadDashboard() {
+            await Promise.all([
+                loadStats(),
+                loadLatestScan(),
+                loadRecentScans()
+            ]);
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/scans/stats');
+                const data = await response.json();
+                if (data.success) {
+                    statsData = data.stats;
+                    document.getElementById('total-scans').textContent = statsData.total_scans;
+                    document.getElementById('threats-detected').textContent = statsData.threats_detected;
+                    
+                    if (statsData.last_scan) {
+                        const lastScan = new Date(statsData.last_scan);
+                        document.getElementById('last-scan-time').textContent = formatTimeAgo(lastScan);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadLatestScan() {
+            try {
+                const response = await fetch('/api/scans/latest');
+                const data = await response.json();
+                
+                const statusCard = document.getElementById('status-card');
+                
+                if (data.success) {
+                    const scan = data.scan;
+                    const alertClass = getAlertClass(scan.alert_level);
+                    const alertIcon = getAlertIcon(scan.alert_level);
+                    const alertMessage = getAlertMessage(scan.alert_level);
+                    
+                    statusCard.innerHTML = `
+                        <div class="status-icon ${alertClass}">
+                            <i class="fas ${alertIcon}"></i>
+                        </div>
+                        <div class="status-info">
+                            <h2>Network Status: ${scan.alert_name}</h2>
+                            <p class="status-description">${alertMessage}</p>
+                            <div class="status-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-percentage"></i>
+                                    <span>Confidence: ${(scan.confidence * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>${formatTimeAgo(new Date(scan.timestamp))}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>${scan.ip_address || 'N/A'}</span>
+                                </div>
+                            </div>
+                            ${scan.alert_level >= 3 ? `
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Action Required:</strong> Disconnect and secure your router immediately!
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    statusCard.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>No Scans Yet</h3>
+                            <p>Click "Scan Now" to check your network</p>
+                            <button class="btn btn-primary" onclick="runManualScan()">
+                                <i class="fas fa-search"></i>
+                                Run First Scan
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading latest scan:', error);
+            }
+        }
+
+        async function loadRecentScans() {
+            try {
+                const response = await fetch('/api/scans?limit=5');
+                const data = await response.json();
+                
+                const scansList = document.getElementById('scans-list');
+                
+                if (data.success && data.scans.length > 0) {
+                    scansData = data.scans;
+                    scansList.innerHTML = data.scans.map(scan => `
+                        <div class="scan-item">
+                            <div class="scan-icon ${getAlertClass(scan.alert_level)}">
+                                <i class="fas ${getAlertIcon(scan.alert_level)}"></i>
+                            </div>
+                            <div class="scan-info">
+                                <h4>${scan.alert_name}</h4>
+                                <p>${formatDateTime(new Date(scan.timestamp))}</p>
+                            </div>
+                            <div class="scan-confidence">
+                                <span class="confidence-badge ${getAlertClass(scan.alert_level)}">
+                                    ${(scan.confidence * 100).toFixed(0)}%
+                                </span>
+                            </div>
+                            <div class="scan-type">
+                                <span class="type-badge ${scan.is_auto ? 'auto' : 'manual'}">
+                                    <i class="fas fa-${scan.is_auto ? 'clock' : 'hand-pointer'}"></i>
+                                    ${scan.is_auto ? 'Auto' : 'Manual'}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    scansList.innerHTML = `
+                        <div class="empty-state-small">
+                            <i class="fas fa-history"></i>
+                            <p>No scan history yet</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading scans:', error);
+            }
+        }
+
+        async function runManualScan() {
+            const modal = document.getElementById('scan-modal');
+            modal.style.display = 'flex';
+            
+            let progress = 0;
+            const progressBar = document.getElementById('progress-fill');
+            const progressInterval = setInterval(() => {
+                progress += 3;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 300);
+            
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const data = await response.json();
+                
+                clearInterval(progressInterval);
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    
+                    if (data.success) {
+                        showAlert('Scan completed successfully!', 'success');
+                        loadDashboard();
+                    } else {
+                        showAlert(data.error || 'Scan failed', 'error');
+                    }
+                }, 500);
+            } catch (error) {
+                clearInterval(progressInterval);
+                modal.style.display = 'none';
+                progressBar.style.width = '0%';
+                showAlert('Connection error during scan', 'error');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', {method: 'POST'});
+                window.location.href = '/login';
+            } catch (error) {
+                window.location.href = '/login';
+            }
+        }
+
+        function refreshScans() {
+            loadDashboard();
+            showAlert('Dashboard refreshed', 'success');
+        }
+
+        function startAutoRefresh() {
+            setInterval(() => {
+                loadStats();
+                loadLatestScan();
+            }, 60000); // Refresh every minute
+        }
+
+        // Helper functions
+        function getAlertClass(level) {
+            const classes = ['safe', 'info', 'warning', 'danger', 'critical'];
+            return classes[level] || 'safe';
+        }
+
+        function getAlertIcon(level) {
+            const icons = ['fa-shield-check', 'fa-info-circle', 'fa-exclamation-triangle', 'fa-exclamation-circle', 'fa-skull-crossbones'];
+            return icons[level] || 'fa-shield-check';
+        }
+
+        function getAlertMessage(level) {
+            const messages = [
+                'Your network is secure and no threats were detected.',
+                'Minor anomalies detected. Continue monitoring.',
+                'Suspicious activity detected. Consider investigating.',
+                'Zombie WiFi likely detected! Take action immediately.',
+                'Critical threat! Disconnect and secure your network now!'
+            ];
+            return messages[level] || messages[0];
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.floor(hours / 24);
+            return `${days}d ago`;
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showAlert(message, type) {
+            const container = document.getElementById('alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+                ${message}
+            `;
+            container.appendChild(alert);
+            setTimeout(() => alert.remove(), 5000);
+        }
+
+        function showScans() {
+            showAlert('Scan history feature coming soon!', 'info');
+        }
+
+        function showSettings() {
+            showAlert('Settings feature coming soon!', 'info');
+        }
+    </script>
+</body>
+</html>
