@@ -1,16 +1,27 @@
 """
 Audio Preprocessing Module
 Extracts MFCC and spectral features from audio files
+Compatible with all NumPy versions (no numba dependency)
 """
 
-# Disable numba to avoid NumPy version conflicts
+# Disable numba completely to ensure compatibility with all NumPy versions
 import os
 os.environ['NUMBA_DISABLE_JIT'] = '1'
+os.environ['NUMBA_CACHE_DIR'] = '/tmp'
 
-import librosa
+import warnings
+warnings.filterwarnings('ignore')
+
 import numpy as np
 import logging
 from scipy import signal
+
+# Import librosa without numba acceleration
+import librosa
+# Force librosa to not use numba
+import librosa.core
+if hasattr(librosa.core, 'load'):
+    librosa.core.load.__globals__['numba'] = None
 
 logger = logging.getLogger(__name__)
 

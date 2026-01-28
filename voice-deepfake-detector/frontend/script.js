@@ -5,7 +5,7 @@
 
 // Configuration
 const API_BASE_URL = 'http://localhost:5000';
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 // State
 let currentFile = null;
@@ -152,7 +152,7 @@ async function validateAndLoadFile(file) {
     
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-        showToast('File too large. Maximum size is 10MB.');
+        showToast('File too large. Maximum size is 50MB.');
         return;
     }
     
@@ -179,8 +179,8 @@ async function validateAndLoadFile(file) {
                 return;
             }
             
-            if (duration > 60) {
-                showToast('Audio too long. Maximum duration is 60 seconds.');
+            if (duration > 300) {
+                showToast('Audio too long. Maximum duration is 300 seconds (5 minutes).');
                 removeFile();
                 return;
             }

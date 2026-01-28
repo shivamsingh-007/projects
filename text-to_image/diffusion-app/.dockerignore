@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+LICENSE
+
+# Testing
+tests/
+*.test.py
+
+# Models (download at runtime)
+models/
+*.pth
+*.safetensors
+*.ckpt
+
+# Logs
+*.log
+logs/
+
+# Other
+.env
+.env.local
+*.bak

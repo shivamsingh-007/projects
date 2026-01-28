@@ -1,0 +1,54 @@
+{
+  "name": "awsg",
+  "version": "1.0.0",
+  "description": "Adaptive Web Security Gateway - Enterprise-grade security for web applications",
+  "main": "awsg-core.js",
+  "types": "awsg.d.ts",
+  "module": "awsg-core.js",
+  "browser": "awsg-core.js",
+  "files": [
+    "awsg-core.js",
+    "awsg.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test-suite.js",
+    "build": "echo 'Build step (minification) would go here'",
+    "lint": "echo 'ESLint would run here'",
+    "benchmark": "echo 'Performance benchmarks would run here'"
+  },
+  "keywords": [
+    "security",
+    "xss",
+    "csrf",
+    "sql-injection",
+    "ssrf",
+    "prototype-pollution",
+    "web-security",
+    "owasp",
+    "zero-dependency",
+    "lightweight",
+    "enterprise",
+    "production-ready"
+  ],
+  "author": "Security Architecture Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/awsg.git"
+  },
+  "bugs": {
+    "url": "https://github.com/example/awsg/issues"
+  },
+  "homepage": "https://github.com/example/awsg#readme",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}

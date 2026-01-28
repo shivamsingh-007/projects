@@ -31,7 +31,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend communication
 
 # Configuration
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10MB max file size
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 app.config['UPLOAD_FOLDER'] = 'uploads'
 ALLOWED_EXTENSIONS = {'mp3', 'wav', 'm4a', 'ogg', 'flac'}
 
@@ -90,17 +90,17 @@ def analyze_audio():
             audio_data, sample_rate = librosa.load(filepath, sr=None)
             duration = librosa.get_duration(y=audio_data, sr=sample_rate)
             
-            # Validate audio duration (1-30 seconds optimal)
+            # Validate audio duration (0.5-300 seconds)
             if duration < 0.5:
                 os.remove(filepath)
                 return jsonify({
                     'error': 'Audio too short. Minimum duration: 0.5 seconds'
                 }), 400
             
-            if duration > 60:
+            if duration > 300:
                 os.remove(filepath)
                 return jsonify({
-                    'error': 'Audio too long. Maximum duration: 60 seconds'
+                    'error': 'Audio too long. Maximum duration: 300 seconds (5 minutes)'
                 }), 400
             
         except Exception as e:
@@ -151,16 +151,16 @@ def get_formats():
     """Return supported audio formats"""
     return jsonify({
         'supported_formats': list(ALLOWED_EXTENSIONS),
-        'max_file_size_mb': 10,
-        'optimal_duration': '1-30 seconds',
-        'max_duration': '60 seconds'
+        'max_file_size_mb': 50,
+        'optimal_duration': '1-60 seconds',
+        'max_duration': '300 seconds (5 minutes)'
     })
 
 @app.errorhandler(413)
 def request_entity_too_large(error):
     """Handle file too large error"""
     return jsonify({
-        'error': 'File too large. Maximum size: 10MB'
+        'error': 'File too large. Maximum size: 50MB'
     }), 413
 
 @app.errorhandler(500)

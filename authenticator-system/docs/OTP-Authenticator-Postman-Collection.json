@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "OTP Authenticator API",
+    "description": "Complete API collection for OTP Authenticator System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000/api",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:5000/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5000",
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "1. Signup User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.collectionVariables.set('userId', jsonData.data.user.id);",
+              "    pm.collectionVariables.set('token', jsonData.data.token);",
+              "    console.log('User ID:', jsonData.data.user.id);",
+              "    console.log('Token:', jsonData.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"mobile\": \"+1234567890\",\n  \"password\": \"Test123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/signup",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "signup"]
+        },
+        "description": "Register a new user. Auto-saves userId and token to collection variables."
+      }
+    },
+    {
+      "name": "2. Verify OTP",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"emailOTP\": \"123456\",\n  \"mobileOTP\": \"789012\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/verify-otp",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "verify-otp"]
+        },
+        "description": "Verify OTP codes. Check your email and phone for actual OTP codes."
+      }
+    },
+    {
+      "name": "3. Resend OTP - Both",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"both\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/resend-otp",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "resend-otp"]
+        },
+        "description": "Resend OTP to both email and mobile."
+      }
+    },
+    {
+      "name": "3. Resend OTP - Email Only",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"email\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/resend-otp",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "resend-otp"]
+        },
+        "description": "Resend OTP to email only."
+      }
+    },
+    {
+      "name": "3. Resend OTP - Mobile Only",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"type\": \"mobile\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/auth/resend-otp",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "resend-otp"]
+        },
+        "description": "Resend OTP to mobile only."
+      }
+    },
+    {
+      "name": "4. Get Verification Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/status/{{userId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "status", "{{userId}}"]
+        },
+        "description": "Check current verification status of the user."
+      }
+    },
+    {
+      "name": "5. Get User Profile (Protected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/profile",
+          "host": ["{{baseUrl}}"],
+          "path": ["auth", "profile"]
+        },
+        "description": "Get authenticated user profile. Requires valid JWT token."
+      }
+    }
+  ]
+}

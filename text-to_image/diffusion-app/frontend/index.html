@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator - Stable Diffusion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .image-zoom {
+            transition: transform 0.3s ease;
+        }
+        
+        .image-zoom:hover {
+            transform: scale(1.05);
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        .progress-bar {
+            animation: progress 2s ease-in-out infinite;
+        }
+        
+        @keyframes progress {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .shimmer {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0) 0%, 
+                rgba(255,255,255,0.3) 50%, 
+                rgba(255,255,255,0) 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        function App() {
+            const [darkMode, setDarkMode] = useState(true);
+            const [prompt, setPrompt] = useState('');
+            const [negativePrompt, setNegativePrompt] = useState('blurry, low quality, distorted, ugly');
+            const [generatedImage, setGeneratedImage] = useState(null);
+            const [isGenerating, setIsGenerating] = useState(false);
+            const [progress, setProgress] = useState(0);
+            const [history, setHistory] = useState([]);
+            const [settings, setSettings] = useState({
+                steps: 30,
+                guidanceScale: 7.5,
+                seed: '',
+                width: 512,
+                height: 512
+            });
+            const [suggestions, setSuggestions] = useState([]);
+            const [selectedCategory, setSelectedCategory] = useState(null);
+            const [showSettings, setShowSettings] = useState(false);
+            const [generationTime, setGenerationTime] = useState(null);
+            const [modelInfo, setModelInfo] = useState(null);
+            const [zoomedImage, setZoomedImage] = useState(null);
+
+            useEffect(() => {
+                document.documentElement.classList.toggle('dark', darkMode);
+                fetchSuggestions();
+                fetchModelInfo();
+            }, [darkMode]);
+
+            const fetchSuggestions = async () => {
+                try {
+                    const response = await fetch('/prompts/suggestions');
+                    const data = await response.json();
+                    setSuggestions(data.suggestions);
+                } catch (error) {
+                    console.error('Failed to fetch suggestions:', error);
+                }
+            };
+
+            const fetchModelInfo = async () => {
+                try {
+                    const response = await fetch('/model/info');
+                    const data = await response.json();
+                    setModelInfo(data);
+                } catch (error) {
+                    console.error('Failed to fetch model info:', error);
+                }
+            };
+
+            const generateImage = async () => {
+                if (!prompt.trim()) {
+                    alert('Please enter a prompt');
+                    return;
+                }
+
+                setIsGenerating(true);
+                setProgress(0);
+                setGenerationTime(null);
+
+                const progressInterval = setInterval(() => {
+                    setProgress(prev => Math.min(prev + 2, 95));
+                }, 200);
+
+                try {
+                    const requestBody = {
+                        prompt: prompt,
+                        negative_prompt: negativePrompt,
+                        num_inference_steps: parseInt(settings.steps),
+                        guidance_scale: parseFloat(settings.guidanceScale),
+                        width: parseInt(settings.width),
+                        height: parseInt(settings.height)
+                    };
+
+                    if (settings.seed) {
+                        requestBody.seed = parseInt(settings.seed);
+                    }
+
+                    const response = await fetch('/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Generation failed');
+                    }
+
+                    const data = await response.json();
+                    
+                    clearInterval(progressInterval);
+                    setProgress(100);
+
+                    const imageData = {
+                        image: `data:image/png;base64,${data.image}`,
+                        prompt: prompt,
+                        seed: data.seed,
+                        time: data.generation_time,
+                        isSafe: data.is_safe,
+                        metadata: data.metadata,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    setGeneratedImage(imageData);
+                    setGenerationTime(data.generation_time);
+                    setHistory(prev => [imageData, ...prev].slice(0, 20));
+
+                    if (!data.is_safe) {
+                        alert('Warning: Generated image may contain inappropriate content');
+                    }
+
+                } catch (error) {
+                    clearInterval(progressInterval);
+                    alert(`Error: ${error.message}`);
+                } finally {
+                    setIsGenerating(false);
+                    setTimeout(() => setProgress(0), 1000);
+                }
+            };
+
+            const downloadImage = (imageData) => {
+                const link = document.createElement('a');
+                link.href = imageData.image;
+                link.download = `generated-${Date.now()}.png`;
+                link.click();
+            };
+
+            const usePrompt = (selectedPrompt) => {
+                setPrompt(selectedPrompt);
+                setSelectedCategory(null);
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {/* Header */}
+                    <header className="gradient-bg text-white shadow-lg">
+                        <div className="container mx-auto px-4 py-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <div>
+                                        <h1 className="text-2xl font-bold">AI Image Generator</h1>
+                                        <p className="text-sm opacity-90">Powered by Stable Diffusion 2.1</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center space-x-4">
+                                    {modelInfo && (
+                                        <div className="text-sm opacity-90">
+                                            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                            {modelInfo.device.toUpperCase()}
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => setDarkMode(!darkMode)}
+                                        className="p-2 rounded-lg glass-effect hover:bg-white/20 transition"
+                                    >
+                                        {darkMode ? '🌞' : '🌙'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="container mx-auto px-4 py-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Left Column - Input */}
+                            <div className="space-y-6">
+                                {/* Prompt Input */}
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 fade-in">
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                        Prompt
+                                    </label>
+                                    <textarea
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        placeholder="Describe the image you want to generate..."
+                                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                                        rows="4"
+                                        disabled={isGenerating}
+                                    />
+
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-4">
+                                        Negative Prompt
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={negativePrompt}
+                                        onChange={(e) => setNegativePrompt(e.target.value)}
+                                        placeholder="What to avoid in the image..."
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                        disabled={isGenerating}
+                                    />
+
+                                    {/* Advanced Settings Toggle */}
+                                    <button
+                                        onClick={() => setShowSettings(!showSettings)}
+                                        className="mt-4 text-purple-600 dark:text-purple-400 hover:underline text-sm font-medium"
+                                    >
+                                        {showSettings ? '▼' : '▶'} Advanced Settings
+                                    </button>
+
+                                    {showSettings && (
+                                        <div className="mt-4 space-y-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Inference Steps: {settings.steps}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="10"
+                                                    max="50"
+                                                    value={settings.steps}
+                                                    onChange={(e) => setSettings({...settings, steps: e.target.value})}
+                                                    className="w-full"
+                                                    disabled={isGenerating}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Guidance Scale: {settings.guidanceScale}
+                                                </label>
+                                                <input
+                                                    type="range"
+                                                    min="1"
+                                                    max="20"
+                                                    step="0.5"
+                                                    value={settings.guidanceScale}
+                                                    onChange={(e) => setSettings({...settings, guidanceScale: e.target.value})}
+                                                    className="w-full"
+                                                    disabled={isGenerating}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Width
+                                                    </label>
+                                                    <select
+                                                        value={settings.width}
+                                                        onChange={(e) => setSettings({...settings, width: e.target.value})}
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                        disabled={isGenerating}
+                                                    >
+                                                        <option value="256">256</option>
+                                                        <option value="512">512</option>
+                                                        <option value="768">768</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Height
+                                                    </label>
+                                                    <select
+                                                        value={settings.height}
+                                                        onChange={(e) => setSettings({...settings, height: e.target.value})}
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                        disabled={isGenerating}
+                                                    >
+                                                        <option value="256">256</option>
+                                                        <option value="512">512</option>
+                                                        <option value="768">768</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Seed (optional)
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    value={settings.seed}
+                                                    onChange={(e) => setSettings({...settings, seed: e.target.value})}
+                                                    placeholder="Random"
+                                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                                    disabled={isGenerating}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Generate Button */}
+                                    <button
+                                        onClick={generateImage}
+                                        disabled={isGenerating || !prompt.trim()}
+                                        className="w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105"
+                                    >
+                                        {isGenerating ? (
+                                            <span className="loading-dots">Generating</span>
+                                        ) : (
+                                            '✨ Generate Image'
+                                        )}
+                                    </button>
+
+                                    {/* Progress Bar */}
+                                    {isGenerating && (
+                                        <div className="mt-4">
+                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className="bg-gradient-to-r from-purple-600 to-pink-600 h-full transition-all duration-300"
+                                                    style={{width: `${progress}%`}}
+                                                />
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 text-center">
+                                                {progress}% complete
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Prompt Suggestions */}
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        💡 Prompt Examples
+                                    </h3>
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        {suggestions.map((category, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setSelectedCategory(selectedCategory === idx ? null : idx)}
+                                                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                                                    selectedCategory === idx
+                                                        ? 'bg-purple-600 text-white'
+                                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                                }`}
+                                            >
+                                                {category.category}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {selectedCategory !== null && (
+                                        <div className="space-y-2">
+                                            {suggestions[selectedCategory].prompts.map((p, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => usePrompt(p)}
+                                                    className="w-full text-left px-4 py-2 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/30 transition text-sm text-gray-700 dark:text-gray-300"
+                                                >
+                                                    {p}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Right Column - Output */}
+                            <div className="space-y-6">
+                                {/* Generated Image */}
+                                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        Generated Image
+                                    </h3>
+                                    {generatedImage ? (
+                                        <div className="space-y-4">
+                                            <div 
+                                                className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-700 cursor-pointer"
+                                                onClick={() => setZoomedImage(generatedImage)}
+                                            >
+                                                <img
+                                                    src={generatedImage.image}
+                                                    alt="Generated"
+                                                    className="w-full h-auto image-zoom"
+                                                />
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                                <p><strong>Prompt:</strong> {generatedImage.prompt}</p>
+                                                <p><strong>Seed:</strong> {generatedImage.seed}</p>
+                                                {generationTime && (
+                                                    <p><strong>Time:</strong> {generationTime.toFixed(2)}s</p>
+                                                )}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => downloadImage(generatedImage)}
+                                                    className="flex-1 bg-green-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-green-700 transition"
+                                                >
+                                                    📥 Download
+                                                </button>
+                                                <button
+                                                    onClick={() => setSettings({...settings, seed: generatedImage.seed.toString()})}
+                                                    className="flex-1 bg-blue-600 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+                                                >
+                                                    🔄 Use Seed
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                                            <div className="text-center text-gray-400 dark:text-gray-500">
+                                                <svg className="w-20 h-20 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <p>Your generated image will appear here</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* History */}
+                                {history.length > 0 && (
+                                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                            📚 History
+                                        </h3>
+                                        <div className="grid grid-cols-3 gap-3 max-h-96 overflow-y-auto">
+                                            {history.map((item, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    className="relative aspect-square rounded-lg overflow-hidden cursor-pointer transform hover:scale-105 transition"
+                                                    onClick={() => setGeneratedImage(item)}
+                                                >
+                                                    <img
+                                                        src={item.image}
+                                                        alt={`History ${idx}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Zoom Modal */}
+                    {zoomedImage && (
+                        <div
+                            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+                            onClick={() => setZoomedImage(null)}
+                        >
+                            <div className="max-w-4xl max-h-full">
+                                <img
+                                    src={zoomedImage.image}
+                                    alt="Zoomed"
+                                    className="max-w-full max-h-screen object-contain"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12">
+                        <div className="container mx-auto px-4 py-6 text-center text-gray-600 dark:text-gray-400">
+                            <p className="text-sm">
+                                Powered by Stable Diffusion 2.1 • Built with FastAPI & React • 
+                                {modelInfo && <span> Running on {modelInfo.device.toUpperCase()}</span>}
+                            </p>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

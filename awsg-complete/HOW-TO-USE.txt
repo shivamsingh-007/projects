@@ -1,0 +1,214 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   🛡️  AWSG - AUTONOMOUS WEB SECURITY GATEWAY                     ║
+║                                                                  ║
+║   Real-time threat protection that works completely offline     ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+
+📋 QUICK START (3 STEPS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: See it working first
+────────────────────────────
+   Open: examples/demo-realtime.html
+   Click the red "attack" buttons
+   Watch threats being blocked in real-time!
+
+
+STEP 2: Copy to your project
+─────────────────────────────
+   Copy: src/awsg-autonomous.js
+   To: your-project/public/js/
+
+
+STEP 3: Add to your app
+────────────────────────
+   Add this before closing </body> tag:
+
+   <script src="/js/awsg-autonomous.js"></script>
+   <script>
+       const security = createSecurityGateway({ 
+           appId: 'my-app' 
+       });
+   </script>
+
+✅ DONE! Your app is now protected!
+
+
+📖 DOCUMENTATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+▶ START-HERE.md          ← Read this first!
+▶ QUICKSTART.md          ← 60-second installation
+▶ INSTALLATION.md        ← Detailed guide for all frameworks
+▶ SETUP-GUIDE.md         ← Visual step-by-step guide
+▶ docs/README.md         ← Complete documentation
+
+
+🎮 TRY THE DEMO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Double-click: examples/demo-realtime.html
+   
+   This shows real attacks being blocked in real-time!
+
+
+📁 WHAT'S INCLUDED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   src/
+   ├── awsg-autonomous.js    ⭐ Main file - Copy this!
+   └── awsg.d.ts            TypeScript definitions
+
+   examples/
+   ├── demo-realtime.html    🎮 Interactive demo
+   └── integration-examples.js
+
+   docs/
+   ├── README.md             Complete documentation
+   ├── DEPLOYMENT-GUIDE.md   Production deployment
+   └── PRODUCTION-CHECKLIST.md
+
+   tests/
+   ├── quick-test.js         Fast validation
+   └── test-suite.js         Full test suite
+
+
+🎯 FRAMEWORK EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+VANILLA JS:
+───────────
+<script src="awsg-autonomous.js"></script>
+<script>
+    const security = createSecurityGateway({ appId: 'my-app' });
+</script>
+
+
+REACT:
+──────
+useEffect(() => {
+    const security = createSecurityGateway({ appId: 'my-app' });
+}, []);
+
+
+VUE.JS:
+───────
+const security = createSecurityGateway({ appId: 'my-app' });
+
+
+NEXT.JS:
+────────
+useEffect(() => {
+    if (typeof window !== 'undefined') {
+        const security = createSecurityGateway({ appId: 'my-app' });
+    }
+}, []);
+
+
+ANGULAR:
+────────
+ngOnInit() {
+    const script = document.createElement('script');
+    script.src = '/assets/awsg-autonomous.js';
+    script.onload = () => {
+        const security = createSecurityGateway({ appId: 'my-app' });
+    };
+    document.head.appendChild(script);
+}
+
+
+✅ VERIFY IT'S WORKING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open browser console (F12) and run:
+
+   const script = document.createElement('script');
+   script.textContent = 'alert("test")';
+   document.body.appendChild(script);
+
+You should see:
+   🚨 THREAT BLOCKED: XSS_DANGEROUS_TAG
+
+
+🛡️ WHAT GETS PROTECTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ XSS (Cross-Site Scripting)
+✅ SQL Injection  
+✅ SSRF (Server-Side Request Forgery)
+✅ Prototype Pollution
+✅ Path Traversal
+✅ Command Injection
+
+All blocked in real-time, works offline!
+
+
+⚙️ CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BASIC (Recommended):
+────────────────────
+const security = createSecurityGateway({
+    appId: 'my-app'
+});
+
+
+WITH YOUR API:
+──────────────
+const security = createSecurityGateway({
+    appId: 'my-app',
+    trustedOrigins: ['api.mysite.com']
+});
+
+
+ADVANCED:
+─────────
+const security = createSecurityGateway({
+    appId: 'my-app',
+    logLevel: 'warn',
+    trustedOrigins: ['api.mysite.com'],
+    onThreatDetected: (threat) => {
+        console.log('Blocked:', threat.type);
+    }
+});
+
+
+🆘 NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Read: START-HERE.md
+2. Read: INSTALLATION.md  
+3. Read: docs/README.md
+4. Try: examples/demo-realtime.html
+
+
+📊 KEY FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Real-time blocking (not just detection)
+✅ Works 100% offline
+✅ Zero dependencies
+✅ ~20KB size
+✅ <1% CPU overhead
+✅ 60-second installation
+✅ Framework agnostic
+
+
+🚀 GET STARTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open: START-HERE.md
+2. Or read: QUICKSTART.md
+3. Or try: examples/demo-realtime.html
+
+
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   Made with 🛡️ for real security in the real world               ║
+║                                                                  ║
+║   Your users will be protected in 60 seconds!                   ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝

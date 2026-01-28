@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  diffusion-app:
+    build: .
+    container_name: ai-image-generator
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount models directory for persistence
+      - ./models:/app/models
+      # Optional: mount for generated images persistence
+      # - ./outputs:/app/outputs
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models
+      - HF_HOME=/app/models
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            # GPU support (requires nvidia-docker)
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # For CPU-only deployment, comment out the deploy section above
+    
+  # Optional: Redis for rate limiting (production)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: ai-image-redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
